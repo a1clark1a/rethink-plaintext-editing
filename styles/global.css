@@ -1,0 +1,32 @@
+:root {
+  --color-white: #ffffff;
+  --color-background: #f6f8f9;
+
+  --color-green: #238a7a;
+
+  --color-active: #1f53f1;
+  --color-active-highlight: #316ed81f;
+
+  --color-text-dark: #000a41;
+  --color-text-dark-mute: #607087;
+
+  --color-border: #e6e8eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+pre[class*='language-javascript'] {
+  color: var(--color-green);
+}
+
+code[class*='language-json'] {
+  color: var(--color-white);
+}

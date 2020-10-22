@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import path from 'path';
+import SimpleMDE from 'react-simplemde-editor';
 
 import css from '../../styles/editor.module.css';
+import { set } from 'lodash';
 
-function PlaintextEditor({ file, write }) {
+function MarkdownEditor({ file, write }) {
   const [newFile, setNewFile] = useState({});
   const [allowEdit, setAllowEdit] = useState(false);
 
@@ -20,14 +22,14 @@ function PlaintextEditor({ file, write }) {
   const save = e => {
     e.preventDefault();
     const file = new File([newFile.text], newFile.name, {
-      type: 'text/plain',
+      type: 'text/markdown',
       lastModified: new Date()
     });
     write(file);
   };
 
   const handleChange = event => {
-    setNewFile({ ...newFile, text: event.target.value });
+    setNewFile({ ...newFile, text: event });
   };
 
   return (
@@ -48,8 +50,7 @@ function PlaintextEditor({ file, write }) {
         </div>
       ) : (
         <h3>
-          {file && newFile.name ? newFile.name : 'add a name for the file'}
-
+          {file && newFile?.name ? newFile?.name : 'add a name for the file'}
           <button
             className={css.button}
             type="button"
@@ -59,12 +60,7 @@ function PlaintextEditor({ file, write }) {
           </button>
         </h3>
       )}
-      <textarea
-        value={file && newFile.text ? newFile.text : 'Write your text here'}
-        rows="30"
-        cols="70"
-        onChange={handleChange}
-      ></textarea>
+      <SimpleMDE onChange={e => handleChange(e)} value={newFile.text} />
       <button className={css.button} type="submit">
         Save
       </button>
@@ -72,9 +68,9 @@ function PlaintextEditor({ file, write }) {
   );
 }
 
-PlaintextEditor.propTypes = {
+MarkdownEditor.propTypes = {
   file: PropTypes.object,
   write: PropTypes.func
 };
 
-export default PlaintextEditor;
+export default MarkdownEditor;

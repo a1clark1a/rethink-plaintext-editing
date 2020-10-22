@@ -1,0 +1,8 @@
+// Added to use 3rd party dependencies
+//https://nextjs.org/docs/basic-features/built-in-css-support#adding-a-global-stylesheet
+import '../styles/global.css';
+import 'easymde/dist/easymde.min.css';
+
+export default function MyApp({ Component, pageProps }) {
+  return <Component {...pageProps} />;
+}
