@@ -3,19 +3,21 @@ import Head from 'next/head';
 import PropTypes from 'prop-types';
 import path from 'path';
 import classNames from 'classnames';
+import marked from 'marked';
 
 import { listFiles } from '../files';
 
 // Used below, these need to be registered
-import MarkdownEditor from '../MarkdownEditor';
+import MarkdownEditor from '../components/MarkdownEditor';
 import PlaintextEditor from '../components/PlaintextEditor';
+import CodePreviewer from '../components/CodePreviewer';
 
 import IconPlaintextSVG from '../public/icon-plaintext.svg';
 import IconMarkdownSVG from '../public/icon-markdown.svg';
 import IconJavaScriptSVG from '../public/icon-javascript.svg';
 import IconJSONSVG from '../public/icon-json.svg';
 
-import css from './style.module.css';
+import css from '../styles/index.module.css';
 
 const TYPE_TO_ICON = {
   'text/plain': IconPlaintextSVG,
@@ -24,7 +26,7 @@ const TYPE_TO_ICON = {
   'application/json': IconJSONSVG
 };
 
-function FilesTable({ files, activeFile, setActiveFile }) {
+function FilesTable({ files, activeFile, setActiveFile, closeEditor }) {
   return (
     <div className={css.files}>
       <table>
@@ -42,7 +44,10 @@ function FilesTable({ files, activeFile, setActiveFile }) {
                 css.row,
                 activeFile && activeFile.name === file.name ? css.active : ''
               )}
-              onClick={() => setActiveFile(file)}
+              onClick={() => {
+                setActiveFile(file);
+                closeEditor();
+              }}
             >
               <td className={css.file}>
                 <div
@@ -76,19 +81,49 @@ FilesTable.propTypes = {
   setActiveFile: PropTypes.func
 };
 
-function Previewer({ file }) {
+// Refactored Previewer to not show editor unless clicked and to render CodePreviewer
+function Previewer({ file, openEditor }) {
   const [value, setValue] = useState('');
 
   useEffect(() => {
     (async () => {
-      setValue(await file.text());
+      if (file?.type === 'text/plain') {
+        setValue(await file.text());
+      } else {
+        setValue(marked(await file.text()));
+      }
     })();
   }, [file]);
 
+  const RenderPreview = ({ file, value }) => {
+    if (file?.type === 'text/plain') {
+      return <div className={css.content}>{value}</div>;
+    } else if (file?.type === 'text/markdown') {
+      return (
+        <article
+          style={{ margin: '0 20px 0 20px' }}
+          dangerouslySetInnerHTML={{ __html: value }}
+        ></article>
+      );
+    } else if (
+      file?.type === 'text/javascript' ||
+      file?.type === 'application/json'
+    ) {
+      return <CodePreviewer file={file}></CodePreviewer>;
+    }
+    return <h3 style={{ marginLeft: '20px' }}>Unknown File</h3>;
+  };
+
   return (
-    <div className={css.preview}>
-      <div className={css.title}>{path.basename(file.name)}</div>
-      <div className={css.content}>{value}</div>
+    <div className={css.container}>
+      {file?.type !== 'text/javascript' &&
+        file?.type !== 'application/json' && (
+          <h3>Click on the content to edit </h3>
+        )}
+      <div className={css.preview} onClick={openEditor}>
+        <div className={css.title}>{path.basename(file.name)}</div>
+        <RenderPreview file={file} value={value} />
+      </div>
     </div>
   );
 }
@@ -99,26 +134,47 @@ Previewer.propTypes = {
 
 // Uncomment keys to register editors for media types
 const REGISTERED_EDITORS = {
-  // "text/plain": PlaintextEditor,
-  // "text/markdown": MarkdownEditor,
+  'text/plain': PlaintextEditor,
+  'text/markdown': MarkdownEditor
 };
 
 function PlaintextFilesChallenge() {
   const [files, setFiles] = useState([]);
   const [activeFile, setActiveFile] = useState(null);
+  const [allowEdit, setAllowEdit] = useState(false);
 
   useEffect(() => {
-    const files = listFiles();
-    setFiles(files);
+    const file = listFiles();
+    setFiles(file);
   }, []);
 
   const write = file => {
     console.log('Writing soon... ', file.name);
 
-    // TODO: Write the file to the `files` array
+    // Check for duplicate file name
+    let exist = false;
+    for (const [key, value] of Object.entries(files)) {
+      if (path.basename(value.name) === file.name) {
+        exist = true;
+      }
+    }
+    !exist && setFiles(files.concat(file));
+
+    setActiveFile(file);
+    closeEditor();
+    // TODO Depending on the project needs I would either make a POST request call here or create an objectfile here to make the changes persist
   };
 
-  const Editor = activeFile ? REGISTERED_EDITORS[activeFile.type] : null;
+  const openEditor = () => {
+    setAllowEdit(true);
+  };
+
+  const closeEditor = () => {
+    setAllowEdit(false);
+  };
+
+  const Editor =
+    activeFile && allowEdit ? REGISTERED_EDITORS[activeFile.type] : null;
 
   return (
     <div className={css.page}>
@@ -139,6 +195,7 @@ function PlaintextFilesChallenge() {
           files={files}
           activeFile={activeFile}
           setActiveFile={setActiveFile}
+          closeEditor={closeEditor}
         />
 
         <div style={{ flex: 1 }}></div>
@@ -158,7 +215,7 @@ function PlaintextFilesChallenge() {
         {activeFile && (
           <>
             {Editor && <Editor file={activeFile} write={write} />}
-            {!Editor && <Previewer file={activeFile} />}
+            {!Editor && <Previewer file={activeFile} openEditor={openEditor} />}
           </>
         )}
 
