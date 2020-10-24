@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import PropTypes from 'prop-types';
 import path from 'path';
 import classNames from 'classnames';
@@ -189,6 +190,9 @@ function PlaintextFilesChallenge() {
             Let{"'"}s explore files in JavaScript. What could be more fun than
             rendering and editing plaintext? Not much, as it turns out.
           </div>
+          <Link href="/urlShortener">
+            <button className={css.button}>URL Shortener</button>
+          </Link>
         </header>
 
         <FilesTable

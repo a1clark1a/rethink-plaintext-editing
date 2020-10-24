@@ -183,3 +183,14 @@
     monospace;
   padding: 20px;
 }
+
+.button {
+  width: 150px;
+  padding: 5px;
+  margin: 5px;
+  background-color: var(--color-green);
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--color-white);
+}
